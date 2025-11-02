@@ -1,0 +1,35 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (set base for GitHub Pages)
+        run: |
+          # Vite needs the correct base when serving from https://<owner>.github.io/<repo>/
+          # Use the repository name to set the base path automatically.
+          REPO_NAME=${{ github.event.repository.name }}
+          echo "Building with base=/$REPO_NAME/"
+          npm run build -- --base "/$REPO_NAME/"
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
